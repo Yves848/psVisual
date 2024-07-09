@@ -1,3 +1,5 @@
+$None = [System.Drawing.Color]::Empty
+
 $Theme = @{
   "background"   = "#272935"
   "black"        = "#272935"

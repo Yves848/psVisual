@@ -1,32 +1,28 @@
-function color {
-  param (
-    $Text,
-    $ForegroundColor = 'default',
-    $BackgroundColor = 'default'
-  )
-  # Terminal Colors
-  $Colors = @{
-    "default"    = @(40, 50)
-    "black"      = @(30, 0)
-    "lightgrey"  = @(33, 43)
-    "grey"       = @(37, 47)
-    "darkgrey"   = @(90, 100)
-    "red"        = @(91, 101)
-    "darkred"    = @(31, 41)
-    "green"      = @(92, 102)
-    "darkgreen"  = @(32, 42)
-    "yellow"     = @(93, 103)
-    "white"      = @(97, 107)
-    "brightblue" = @(94, 104)
-    "darkblue"   = @(34, 44)
-    "indigo"     = @(35, 45)
-    "cyan"       = @(96, 106)
-    "darkcyan"   = @(36, 46)
-  }
-  
-  if ( $ForegroundColor -notin $Colors.Keys -or $BackgroundColor -notin $Colors.Keys) {
-    Write-Error "Invalid color choice!" -ErrorAction Stop
-  }
-  
-  "$([char]27)[$($colors[$ForegroundColor][0])m$([char]27)[$($colors[$BackgroundColor][1])m$($Text)$([char]27)[0m"    
+$VerbosePreference = 'Continue'
+Import-Module "$((Get-Location).Path)\classes.ps1" -Force
+
+
+
+[system.Drawing.color] | Get-Member -Static -MemberType Properties | ForEach-Object {
+  $color = [color]::new([System.Drawing.Color]::"$($_.Name)")
+  write-host "This $($color.render("$($_.Name)",$true,$false)) a test of the color function"
 }
+$top = 0
+$left = 0
+$width = $Host.UI.RawUI.BufferSize.Width
+$height = $Host.UI.RawUI.BufferSize.Height
+[System.Management.Automation.Host.Rectangle]$rect = [System.Management.Automation.Host.Rectangle]::new(0,0,$Host.UI.RawUI.BufferSize.Width,$Host.UI.RawUI.BufferSize.Height)
+[System.Management.Automation.Host.BufferCell[,]]$buffer = $Host.UI.RawUI.GetBufferContents($rect)
+Start-Sleep -Seconds 2
+Clear-Host
+Start-Sleep -Seconds 2
+# Restaurer le contenu capturé
+$Destination = New-Object System.Management.Automation.Host.Coordinates 0, 0
+$cell = [System.Management.Automation.Host.BufferCell]::new("C","White","Red","Complete")
+$buffer[10,1]=$cell
+$buffer[10,2]=$cell
+$buffer[10,3]=$cell
+$buffer[10,10].ForegroundColor = [System.ConsoleColor]::Red
+$Host.UI.RawUI.SetBufferContents($Destination,$buffer)
+
+
