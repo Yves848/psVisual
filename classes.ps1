@@ -13,16 +13,16 @@ class Color {
   [Styles]$style
   
   [string] color16 (
-      [string]$Text,
-      [int]$ForegroundColor = -1,
-      [int]$BackgroundColor = -1,
-      [switch]$Underline,
-      [switch]$Strike
-    ){
+    [string]$Text,
+    [int]$ForegroundColor = -1,
+    [int]$BackgroundColor = -1,
+    [switch]$Underline,
+    [switch]$Strike
+  ) {
     $esc = $([char]0x1b)
   
-    $fore =""
-    $back =""
+    $fore = ""
+    $back = ""
     $Under = ""
     $Stri = ""
     if ($ForegroundColor -ne -1) {
@@ -43,16 +43,16 @@ class Color {
   }
 
   [string] colorRGB (
-      [string]$Text,
-      [System.Drawing.Color]$Foreground,
-      [System.Drawing.Color]$Background,
-      [switch]$Underline,
-      [switch]$Strike
-    ){
+    [string]$Text,
+    [System.Drawing.Color]$Foreground,
+    [System.Drawing.Color]$Background,
+    [switch]$Underline,
+    [switch]$Strike
+  ) {
     $esc = $([char]0x1b)
   
-    $Fore =""
-    $Back =""
+    $Fore = ""
+    $Back = ""
     $Under = ""
     $Stri = ""
     
@@ -89,12 +89,11 @@ class Color {
   
   [string]render (
     [string]$text
-  )
-  {
+  ) {
     $esc = $([char]0x1b)
   
-    $Fore =""
-    $Back =""
+    $Fore = ""
+    $Back = ""
     $Under = ""
     $Stri = ""
     $fore = "$esc[38;2;$($this.Foreground.R);$($this.Foreground.G);$($this.Foreground.B)m"
@@ -102,8 +101,7 @@ class Color {
     if ($this.Background -ne [System.Drawing.Color]::Empty) {
       $back = "$esc[48;2;$($this.Background.R);$($this.Background.G);$($this.Background.B)m"
     }
-    if ( ($this.style -band [Styles]::Underline) -eq [Styles]::Underline )
-    {
+    if ( ($this.style -band [Styles]::Underline) -eq [Styles]::Underline ) {
       $under = "$esc[4m"
     }
     
@@ -119,8 +117,7 @@ class Color {
   [string]render (
     [string]$text,
     [Styles]$style
-  )
-  {
+  ) {
     $oldStyle = $this.style
     $this.style = $style
 
@@ -140,6 +137,7 @@ class Spinner {
   [Int32]$Y = $Host.UI.RawUI.CursorPosition.Y
   [bool]$running = $false
   [Int32]$width = $Host.UI.RawUI.BufferSize.Width
+  [System.Drawing.Color]$SpinColor = [System.Drawing.Color]::MediumOrchid
 
   $Spinners = @{
     "Circle" = @{
@@ -197,7 +195,7 @@ class Spinner {
     $this.runspace = [runspacefactory]::CreateRunspace()
     $this.statedata.offset = ($this.Spinner.Frames | Measure-Object -Property Length -Maximum).Maximum
     $ThemedFrames = @()
-    $color = [Color]::new([System.Drawing.Color]::MediumOrchid)
+    $color = [Color]::new($this.SpinColor)
     $this.Spinner.Frames | ForEach-Object {
       $ThemedFrames += $color.render($_)
     }
@@ -243,6 +241,12 @@ class Spinner {
     [system.console]::write($label)
   }
 
+  [void] SetColor(
+    [System.Drawing.Color]$color
+  ) {
+    $this.SpinColor = $color
+  }
+
   [void] Stop() {
     if ($this.running -eq $true) {
       [System.Console]::setcursorposition(0, $this.Y)
@@ -278,12 +282,18 @@ class List {
   [int]$page = 1
   [int]$height = 10
   [int]$index = 0
+  [string]$filter = ""
 
   [char]$selector = ">"
+
   List (
     [System.Collections.Generic.List[ListItem]]$items
   ) {
     $this.items = $items
+    $this.items | ForEach-Object {
+      $_.selected = $false
+      $_.checked = $false
+    }
   }
 
   [void] Height(
@@ -291,4 +301,84 @@ class List {
   ) {
     $this.height = $height
   }
+
+  [void] Display() {
+    # check if there are multiple pages
+    if ($this.items.Count -gt $this.height) {
+      $this.pages = [math]::Ceiling($this.items.Count / $this.height)
+      [System.Collections.Generic.List[ListItem]]$VisibleItems = $this.items | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
+    }
+    else {
+      [System.Collections.Generic.List[ListItem]]$VisibleItems = $this.items
+    }
+    $stop = $false
+    [console]::CursorVisible = $false
+    $redraw = $true
+    $search = $false
+    [System.Console]::Clear()
+    $SearchColor = [Color]::new([System.Drawing.Color]::BlueViolet)
+    while (-not $stop) {
+      $i = 0
+      if ($redraw) {
+        [Console]::setcursorposition(0,0)
+        if($search) {
+          [console]::Write($SearchColor.Render("Search: "))
+          [console]::CursorVisible = $true
+          $this.filter = $global:host.UI.ReadLine()
+          [console]::CursorVisible = $false
+          $search = $false
+          $redraw = $true
+          Continue
+        } else {
+          [console]::Write("".PadLeft(80, " ")) 
+        }
+        [Console]::setcursorposition(0,1)
+        $VisibleItems | ForEach-Object {
+          if ($this.index -eq $i) {
+            Write-Host "$($this.selector) $($_.text)"
+          }
+          else {
+            Write-Host "  $($_.text)"
+          }
+          # Write-Host $_.text
+          $i++
+        }
+      }
+      $redraw = $false
+      if ($global:Host.UI.RawUI.KeyAvailable) {
+        [System.Management.Automation.Host.KeyInfo]$key = $($global:host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'))
+        [Console]::setcursorposition(0,25)
+        [Console]::write("Key: $($key.VirtualKeyCode)  ")
+        [Console]::setcursorposition(0,26)
+        [Console]::write("Key: $($key.ControlKeyState)  ")
+        switch ($key.VirtualKeyCode) {
+          38 {
+            if ($this.index -gt 0) {
+              $this.index--
+              $redraw = $true
+            }
+          }
+          40 {
+            if ($this.index -lt ($VisibleItems.Count - 1)) {
+              $this.index++
+              $redraw = $true
+            }
+          }
+          191 {
+            if ($key.ControlKeyState -eq "ShiftPressed") {
+              $search = $true
+              $redraw = $true
+            }
+          }
+          13 {
+            $stop = $true
+          }
+        }
+        # [console]::Clear()
+      }
+      
+    }
+    [console]::CursorVisible = $true
+  }
+
 }

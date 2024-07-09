@@ -3,15 +3,23 @@ Import-Module "$((Get-Location).Path)\classes.ps1" -Force
 
 
 
-[system.Drawing.color] | Get-Member -Static -MemberType Properties | ForEach-Object {
-  $color = [color]::new([System.Drawing.Color]::"$($_.Name)")
-  write-host "This $($color.render("$($_.Name)",0)) a test of the color function"
-}
+# [system.Drawing.color] | Get-Member -Static -MemberType Properties | ForEach-Object {
+#   $color = [color]::new([System.Drawing.Color]::"$($_.Name)")
+#   write-host "This $($color.render("$($_.Name)",0)) a test of the color function"
+# }
 
-$spinner = [Spinner]::new("Line")
-$Spinner.Start("Spinner Test")
-Start-Sleep -Seconds 5
-$Spinner.Stop()
+# $spinner = [Spinner]::new("Dots")
+# $spinner.SetColor([System.Drawing.Color]::Red)
+# $Spinner.Start("Spinner Test")
+# Start-Sleep -Seconds 1
+# $Spinner.Stop()
+
+$items = [System.Collections.Generic.List[ListItem]]::new()
+$items.Add([ListItem]::new("Item 1", 1))
+$items.Add([ListItem]::new("Item 2", 2))
+
+$list = [List]::new($items)  
+$list.Display()
 # $top = 0
 # $left = 0
 # $width = $Host.UI.RawUI.BufferSize.Width
