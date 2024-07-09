@@ -283,6 +283,7 @@ class List {
   [int]$height = 10
   [int]$index = 0
   [string]$filter = ""
+  [string]$blanks = (" " * $Host.UI.RawUI.BufferSize.Width) * $this.height
 
   [char]$selector = ">"
 
@@ -317,39 +318,69 @@ class List {
     $search = $false
     [System.Console]::Clear()
     $SearchColor = [Color]::new([System.Drawing.Color]::BlueViolet)
+    $SelectedColor = [Color]::new([System.Drawing.Color]::BlueViolet)
+    $SelectedColor.style = [Styles]::Underline
     while (-not $stop) {
       $i = 0
       if ($redraw) {
-        [Console]::setcursorposition(0,0)
-        if($search) {
+        [Console]::setcursorposition(0, 0)
+        # [console]::Clear()
+        # TODO: Clear the area
+        [Console]::Write($this.blanks)
+        [Console]::setcursorposition(0, 0)
+        if ($search) {
           [console]::Write($SearchColor.Render("Search: "))
           [console]::CursorVisible = $true
           $this.filter = $global:host.UI.ReadLine()
           [console]::CursorVisible = $false
           $search = $false
           $redraw = $true
+          $VisibleItems = $this.items | Where-Object {
+            $_.text -match $this.filter
+          } | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
           Continue
-        } else {
+        }
+        else {
           [console]::Write("".PadLeft(80, " ")) 
         }
-        [Console]::setcursorposition(0,1)
-        $VisibleItems | ForEach-Object {
-          if ($this.index -eq $i) {
-            Write-Host "$($this.selector) $($_.text)"
+        [Console]::setcursorposition(0, 1)
+        
+        $buffer = $VisibleItems | ForEach-Object {
+          $text = $_.text
+          $add = $true
+          if ($add) {
+            if ($_.checked) {
+              $text = "▣ $text"
+            }
+            else {
+              $text = "▢ $text"
+            }
+            if ($this.index -eq $i) {
+              $SelectedColor.render("$($this.selector) $($text)")
+            }
+            else {
+              "  $($text)"
+            }
           }
-          else {
-            Write-Host "  $($_.text)"
-          }
-          # Write-Host $_.text
           $i++
+          
+        } | Out-String
+        [System.Console]::Write($buffer)
+        [Console]::setcursorposition(0, 24)
+        if ($this.filter -and ($this.filter -ne "")) {
+          Write-Host "Filter : $($this.filter)"
+        }
+        else {
+          Write-Host "No Filter                    "
+        
         }
       }
       $redraw = $false
       if ($global:Host.UI.RawUI.KeyAvailable) {
         [System.Management.Automation.Host.KeyInfo]$key = $($global:host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'))
-        [Console]::setcursorposition(0,25)
+        [Console]::setcursorposition(0, 25)
         [Console]::write("Key: $($key.VirtualKeyCode)  ")
-        [Console]::setcursorposition(0,26)
+        [Console]::setcursorposition(0, 26)
         [Console]::write("Key: $($key.ControlKeyState)  ")
         switch ($key.VirtualKeyCode) {
           38 {
@@ -369,6 +400,10 @@ class List {
               $search = $true
               $redraw = $true
             }
+          }
+          9 {
+            $VisibleItems[$this.index].checked = -not $VisibleItems[$this.index].checked
+            $redraw = $true
           }
           13 {
             $stop = $true
