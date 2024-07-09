@@ -403,6 +403,20 @@ class List {
               $redraw = $true
             }
           }
+          37 {
+            if ($this.page -gt 1) {
+              $this.page--
+              $redraw = $true
+              [System.Collections.Generic.List[ListItem]]$VisibleItems = $this.items | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
+            }
+          }
+          39 {
+            if ($this.page -lt $this.pages) {
+              $this.page++
+              $redraw = $true
+              [System.Collections.Generic.List[ListItem]]$VisibleItems = $this.items | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
+            }
+          }
           9 {
             $VisibleItems[$this.index].checked = -not $VisibleItems[$this.index].checked
             $redraw = $true
