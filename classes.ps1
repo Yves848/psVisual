@@ -400,6 +400,13 @@ class List {
         [Console]::setcursorposition(0, 26)
         [Console]::write("Key: $($key.ControlKeyState)  ")
         switch ($key.VirtualKeyCode) {
+          {($_ -ge 65) -and ($_ -le 101)} {
+            $this.filter = $this.filter + $key.Character
+            $VisibleItems = $this.items | Where-Object {
+              $_.text -match $this.filter
+            } | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
+            $redraw = $true
+          }
           38 {
             if ($this.index -gt 0) {
               $this.index--
@@ -416,6 +423,7 @@ class List {
             if ($key.ControlKeyState -eq "ShiftPressed") {
               $search = $true
               $redraw = $true
+              # TODO: Ajouter une recherche incrémentale SANS zone de saisie
             }
           }
           37 {
