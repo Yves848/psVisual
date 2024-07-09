@@ -5,8 +5,13 @@ Import-Module "$((Get-Location).Path)\classes.ps1" -Force
 
 [system.Drawing.color] | Get-Member -Static -MemberType Properties | ForEach-Object {
   $color = [color]::new([System.Drawing.Color]::"$($_.Name)")
-  write-host "This $($color.render("$($_.Name)",[styles]::Strike -bor [Styles]::Underline)) a test of the color function"
+  write-host "This $($color.render("$($_.Name)",0)) a test of the color function"
 }
+
+$spinner = [Spinner]::new("Line")
+$Spinner.Start("Spinner Test")
+Start-Sleep -Seconds 5
+$Spinner.Stop()
 # $top = 0
 # $left = 0
 # $width = $Host.UI.RawUI.BufferSize.Width

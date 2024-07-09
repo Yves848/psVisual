@@ -197,8 +197,9 @@ class Spinner {
     $this.runspace = [runspacefactory]::CreateRunspace()
     $this.statedata.offset = ($this.Spinner.Frames | Measure-Object -Property Length -Maximum).Maximum
     $ThemedFrames = @()
+    $color = [Color]::new([System.Drawing.Color]::MediumOrchid)
     $this.Spinner.Frames | ForEach-Object {
-      $ThemedFrames += gum style $_ --foreground $($Theme["brightPurple"]) 
+      $ThemedFrames += $color.render($_)
     }
     $this.statedata.Frames = $ThemedFrames
     $this.statedata.Sleep = $this.Spinner.Sleep
@@ -217,7 +218,6 @@ class Spinner {
       $i = 0
       while ($true) {
         [System.Console]::setcursorposition($X, $Y)
-        # $text = "$([char]27)[35m$([char]27)[50m$($Frames[$i])$([char]27)[0m"  
         $text = $Frames[$i]    
         [system.console]::write($text)
         [System.Console]::setcursorposition(($X + $statedata.offset) + 1, $Y)
