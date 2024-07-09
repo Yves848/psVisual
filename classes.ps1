@@ -297,6 +297,20 @@ class List {
     }
   }
 
+  [Void] DrawTitle(
+    [string]$title
+  ) {
+    [console]::setcursorposition(0, 0)
+    [console]::WriteLine($title)
+  }
+
+  [Void] DrawFooter(
+    [string]$footer
+  ) {
+    [console]::setcursorposition(0, $this.height + 2)
+    [console]::WriteLine($footer)
+  }
+
   [void] Height(
     [int]$height
   ) {
@@ -368,6 +382,7 @@ class List {
           
         } | Out-String
         [System.Console]::Write($buffer)
+        $this.DrawFooter("Page: $($this.page) of $($this.pages)")
         [Console]::setcursorposition(0, 24)
         if ($this.filter -and ($this.filter -ne "")) {
           Write-Host "Filter : $($this.filter)"
@@ -436,7 +451,6 @@ class List {
         }
         # [console]::Clear()
       }
-      
     }
     [console]::CursorVisible = $true
     [Console]::Clear()
