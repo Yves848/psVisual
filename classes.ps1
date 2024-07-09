@@ -283,7 +283,7 @@ class List {
   [int]$height = 10
   [int]$index = 0
   [string]$filter = ""
-  [string]$blanks = (" " * $Host.UI.RawUI.BufferSize.Width) * $this.height
+  [string]$blanks = (" " * $Host.UI.RawUI.BufferSize.Width) * ($this.height +1)
 
   [char]$selector = ">"
 
