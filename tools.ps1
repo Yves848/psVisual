@@ -16,12 +16,12 @@ Import-Module "$((Get-Location).Path)\classes.ps1" -Force
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 
 $items = [System.Collections.Generic.List[ListItem]]::new()
-$items.Add([ListItem]::new("Banane", 1))
-$items.Add([ListItem]::new("Pomme", 2))
-$items.Add([ListItem]::new("Mandarine", 3))
-$items.Add([ListItem]::new("Pamplemousse", 4))
-$items.Add([ListItem]::new("Pomme de terre", 5))
-  
+$items.Add([ListItem]::new("🍌 Banana", 1))
+$items.Add([ListItem]::new("🍎 Apple", 2))
+$items.Add([ListItem]::new("🍊 Mandarine", 3))
+$items.Add([ListItem]::new("🟠 Grape Fruit", 4))
+$items.Add([ListItem]::new("🥔 Potato", 5))
+
 $list = [List]::new($items)  
 $list.Display()
 # $top = 0

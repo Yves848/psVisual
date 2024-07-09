@@ -303,8 +303,9 @@ class List {
     $this.height = $height
   }
 
-  [void] Display() {
+  [System.Collections.Generic.List[ListItem]] Display() {
     # check if there are multiple pages
+    $result = @()
     if ($this.items.Count -gt $this.height) {
       $this.pages = [math]::Ceiling($this.items.Count / $this.height)
       [System.Collections.Generic.List[ListItem]]$VisibleItems = $this.items | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
@@ -323,12 +324,8 @@ class List {
     while (-not $stop) {
       $i = 0
       if ($redraw) {
-        [Console]::setcursorposition(0, 0)
-        # [console]::Clear()
-        # TODO: Clear the area
-        [Console]::Write($this.blanks)
-        [Console]::setcursorposition(0, 0)
         if ($search) {
+          [Console]::setcursorposition(0, 0)
           [console]::Write($SearchColor.Render("Search: "))
           [console]::CursorVisible = $true
           $this.filter = $global:host.UI.ReadLine()
@@ -343,6 +340,11 @@ class List {
         else {
           [console]::Write("".PadLeft(80, " ")) 
         }
+        [Console]::setcursorposition(0, 0)
+        # [console]::Clear()
+        # TODO: Clear the area
+        [Console]::Write($this.blanks)
+        [Console]::setcursorposition(0, 0)
         [Console]::setcursorposition(0, 1)
         
         $buffer = $VisibleItems | ForEach-Object {
@@ -407,6 +409,15 @@ class List {
           }
           13 {
             $stop = $true
+
+            $VisibleItems | ForEach-Object {
+              if ($_.checked) {
+                $result += $_
+              }
+            }
+          }
+          27 {
+            $stop = $true
           }
         }
         # [console]::Clear()
@@ -414,6 +425,8 @@ class List {
       
     }
     [console]::CursorVisible = $true
+    [Console]::Clear()
+    return $result
   }
 
 }
