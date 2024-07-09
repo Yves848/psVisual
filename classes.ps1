@@ -1,9 +1,16 @@
 . "$((Get-Location).Path)\constants.ps1"
+
+[Flags()] enum Styles {
+  Normal = 1
+  Underline = 2
+  Bold = 4
+  Reversed = 8
+  Strike = 16
+}
 class Color {
   [System.Drawing.Color]$Foreground = [System.Drawing.Color]::Empty
   [System.Drawing.Color]$Background = [System.Drawing.Color]::Empty
-  [bool]$Underline = $false
-  [bool]$Strike = $false
+  [Styles]$style
   
   [string] color16 (
       [string]$Text,
@@ -78,7 +85,6 @@ class Color {
     [System.Drawing.Color]$Foreground
   ) {
     $this.Foreground = $Foreground
-    $this.Background = [System.Drawing.Color]::Empty
   }    
   
   [string]render (
@@ -96,10 +102,13 @@ class Color {
     if ($this.Background -ne [System.Drawing.Color]::Empty) {
       $back = "$esc[48;2;$($this.Background.R);$($this.Background.G);$($this.Background.B)m"
     }
-    if ($this.Underline) {
+    if ( ($this.style -band [Styles]::Underline) -eq [Styles]::Underline )
+    {
       $under = "$esc[4m"
     }
-    if ($this.Strike) {
+    
+    
+    if (($this.style -band [styles]::Strike) -eq [Styles]::Strike) {
       $stri = "$esc[9m"
     }
     $close = "$esc[0m"
@@ -109,19 +118,15 @@ class Color {
 
   [string]render (
     [string]$text,
-    [System.Boolean]$Underline,
-    [System.Boolean]$Strike
+    [Styles]$style
   )
   {
-    $oldUnderline = $this.Underline
-    $oldStrike = $this.Strike
-    $this.Underline = $Underline
-    $this.Strike = $Strike
+    $oldStyle = $this.style
+    $this.style = $style
 
     $result = $this.render($text)
-    
-    $this.Underline = $oldUnderline
-    $this.Strike = $oldStrike
+
+    $this.style = $oldStyle
     return $result
   }
 }
@@ -286,7 +291,4 @@ class List {
   ) {
     $this.height = $height
   }
-
-
-  
 }
