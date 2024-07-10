@@ -33,6 +33,8 @@ $items.Add([ListItem]::new("🥔 Potato 6", 14))
 
 $list = [List]::new($items)  
 $list.Display()
+
+Remove-Module -name classes -Force
 # $top = 0
 # $left = 0
 # $width = $Host.UI.RawUI.BufferSize.Width

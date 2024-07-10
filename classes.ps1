@@ -12,7 +12,7 @@ class Color {
   [System.Drawing.Color]$Background = [System.Drawing.Color]::Empty
   [Styles]$style
   
-  [string] color16 (
+  static [string] color16 (
     [string]$Text,
     [int]$ForegroundColor = -1,
     [int]$BackgroundColor = -1,
@@ -42,7 +42,7 @@ class Color {
     return $result
   }
 
-  [string] colorRGB (
+  static [string] colorRGB (
     [string]$Text,
     [System.Drawing.Color]$Foreground,
     [System.Drawing.Color]$Background,
@@ -283,7 +283,7 @@ class List {
   [int]$height = 10
   [int]$index = 0
   [string]$filter = ""
-  [string]$blanks = (" " * $Host.UI.RawUI.BufferSize.Width) * ($this.height +1)
+  [string]$blanks = (" " * $Host.UI.RawUI.BufferSize.Width) * ($this.height + 1)
 
   [char]$selector = ">"
 
@@ -320,13 +320,8 @@ class List {
   [System.Collections.Generic.List[ListItem]] Display() {
     # check if there are multiple pages
     $result = @()
-    if ($this.items.Count -gt $this.height) {
-      $this.pages = [math]::Ceiling($this.items.Count / $this.height)
-      [System.Collections.Generic.List[ListItem]]$VisibleItems = $this.items | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
-    }
-    else {
-      [System.Collections.Generic.List[ListItem]]$VisibleItems = $this.items
-    }
+    $this.pages = [math]::Ceiling($this.items.Count / $this.height)
+    [System.Collections.Generic.List[ListItem]]$VisibleItems = @()
     $stop = $false
     [console]::CursorVisible = $false
     $redraw = $true
@@ -339,6 +334,7 @@ class List {
       $i = 0
       if ($redraw) {
         if ($search) {
+          # TODO: Gérer les coordonnées pour intégrer le cadre
           [Console]::setcursorposition(0, 0)
           [console]::Write($SearchColor.Render("Search: "))
           [console]::CursorVisible = $true
@@ -346,13 +342,20 @@ class List {
           [console]::CursorVisible = $false
           $search = $false
           $redraw = $true
-          $VisibleItems = $this.items | Where-Object {
-            $_.text -match $this.filter
-          } | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
           Continue
         }
         else {
           [console]::Write("".PadLeft(80, " ")) 
+        }
+        if ($this.filter -and ($this.filter -ne "")) {
+          $VisibleItems = $this.items | Where-Object {
+            $_.text -match $this.filter
+          } | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
+          $this.pages = [math]::Ceiling($VisibleItems.Count / $this.height)
+        }
+        else {
+          $VisibleItems = $this.items | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
+          $this.pages = [math]::Ceiling($this.items.Count / $this.height)
         }
         [Console]::setcursorposition(0, 0)
         # [console]::Clear()
@@ -400,7 +403,7 @@ class List {
         [Console]::setcursorposition(0, 26)
         [Console]::write("Key: $($key.ControlKeyState)  ")
         switch ($key.VirtualKeyCode) {
-          {($_ -ge 65) -and ($_ -le 101)} {
+          { ($_ -ge 65) -and ($_ -le 101) } {
             $car = $key.Character.ToString()
             if ($key.ControlKeyState -eq "ShiftPressed") {
               $car = $car.ToUpper()
