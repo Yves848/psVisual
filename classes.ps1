@@ -401,11 +401,24 @@ class List {
         [Console]::write("Key: $($key.ControlKeyState)  ")
         switch ($key.VirtualKeyCode) {
           {($_ -ge 65) -and ($_ -le 101)} {
-            $this.filter = $this.filter + $key.Character
+            $car = $key.Character.ToString()
+            if ($key.ControlKeyState -eq "ShiftPressed") {
+              $car = $car.ToUpper()
+            }
+            $this.filter = $this.filter + $Car
             $VisibleItems = $this.items | Where-Object {
               $_.text -match $this.filter
             } | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
             $redraw = $true
+          }
+          8 {
+            if ($this.filter.Length -gt 0) {
+              $this.filter = $this.filter.Substring(0, $this.filter.Length - 1)
+              $VisibleItems = $this.items | Where-Object {
+                $_.text -match $this.filter
+              } | Select-Object -Skip (($this.page - 1) * $this.height) -First $this.height
+              $redraw = $true
+            }
           }
           38 {
             if ($this.index -gt 0) {
