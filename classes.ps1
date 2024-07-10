@@ -485,7 +485,7 @@ class List {
     }
     [console]::CursorVisible = $true
     [Console]::Clear()
-    return $result | Select-Object -ExcludeProperty checked, selected
+    return $result | Select-Object -Property text, value
   }
 
 }
