@@ -263,9 +263,11 @@ class Spinner {
 
 class ListItem {
   [string]$text
-  [int]$value
+  [PSCustomObject]$value
   [bool]$selected = $false
   [bool]$checked = $false
+  [Color]$SearchColor 
+  [Color]$SelectedColor
 
   ListItem(
     [string]$text,
@@ -286,6 +288,8 @@ class List {
   [string]$blanks = (" " * $Host.UI.RawUI.BufferSize.Width) * ($this.height + 1)
 
   [char]$selector = ">"
+  [Color]$SearchColor
+  [Color]$SelectedColor
 
   List (
     [System.Collections.Generic.List[ListItem]]$items
@@ -295,6 +299,9 @@ class List {
       $_.selected = $false
       $_.checked = $false
     }
+    $this.SearchColor = [Color]::new([System.Drawing.Color]::BlueViolet)
+    $this.SelectedColor = [Color]::new([System.Drawing.Color]::BlueViolet)
+    $this.SelectedColor.style = [Styles]::Underline
   }
 
   [Void] DrawTitle(
@@ -317,8 +324,33 @@ class List {
     $this.height = $height
   }
 
-  [System.Collections.Generic.List[ListItem]] Display() {
-    # check if there are multiple pages
+  [String] MakeBufer(
+    [System.Collections.Generic.List[ListItem]]$items
+  ) {
+    $i = 0
+    $buffer = $items | ForEach-Object {
+      $text = $_.text
+      $add = $true
+      if ($add) {
+        if ($_.checked) {
+          $text = "▣ $text"
+        }
+        else {
+          $text = "▢ $text"
+        }
+        if ($this.index -eq $i) {
+          $this.SelectedColor.render("$($this.selector) $($text)")
+        }
+        else {
+          "  $($text)"
+        }
+      }
+      $i++
+    } | Out-String
+    return $buffer
+  }
+
+  [System.Collections.Generic.List[PSObject]] Display() {
     $result = @()
     $this.pages = [math]::Ceiling($this.items.Count / $this.height)
     [System.Collections.Generic.List[ListItem]]$VisibleItems = @()
@@ -327,16 +359,13 @@ class List {
     $redraw = $true
     $search = $false
     [System.Console]::Clear()
-    $SearchColor = [Color]::new([System.Drawing.Color]::BlueViolet)
-    $SelectedColor = [Color]::new([System.Drawing.Color]::BlueViolet)
-    $SelectedColor.style = [Styles]::Underline
+    # TODO: Gérer les couleurs à partir du thème
     while (-not $stop) {
-      $i = 0
       if ($redraw) {
         if ($search) {
           # TODO: Gérer les coordonnées pour intégrer le cadre
           [Console]::setcursorposition(0, 0)
-          [console]::Write($SearchColor.Render("Search: "))
+          [console]::Write($this.SearchColor.Render("Search: "))
           [console]::CursorVisible = $true
           $this.filter = $global:host.UI.ReadLine()
           [console]::CursorVisible = $false
@@ -358,32 +387,10 @@ class List {
           $this.pages = [math]::Ceiling($this.items.Count / $this.height)
         }
         [Console]::setcursorposition(0, 0)
-        # [console]::Clear()
-        # TODO: Clear the area
         [Console]::Write($this.blanks)
-        [Console]::setcursorposition(0, 0)
         [Console]::setcursorposition(0, 1)
         
-        $buffer = $VisibleItems | ForEach-Object {
-          $text = $_.text
-          $add = $true
-          if ($add) {
-            if ($_.checked) {
-              $text = "▣ $text"
-            }
-            else {
-              $text = "▢ $text"
-            }
-            if ($this.index -eq $i) {
-              $SelectedColor.render("$($this.selector) $($text)")
-            }
-            else {
-              "  $($text)"
-            }
-          }
-          $i++
-          
-        } | Out-String
+        $buffer = $this.MakeBufer($VisibleItems)
         [System.Console]::Write($buffer)
         $this.DrawFooter("Page: $($this.page) of $($this.pages)")
         [Console]::setcursorposition(0, 24)
@@ -478,7 +485,7 @@ class List {
     }
     [console]::CursorVisible = $true
     [Console]::Clear()
-    return $result
+    return $result | Select-Object -ExcludeProperty checked, selected
   }
 
 }
